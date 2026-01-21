@@ -172,8 +172,9 @@ async function loadChat(chatId) {
 async function startNewChat() {
   // Mevcut sohbet boşsa yeni sohbet açma
   if (currentChatId && messages.length === 0) {
-    console.log('Mevcut sohbet zaten boş, yeni sohbet açılmadı');
-    showWelcomeView();
+    console.log('Mevcut sohbet zaten boş, direkt chat view göster');
+    showChatView();
+    elements.chatInput.focus();
     return;
   }
   
@@ -188,7 +189,8 @@ async function startNewChat() {
     messages = [];
     renderMessages();
     loadChatHistory();
-    showWelcomeView();
+    showChatView();
+    elements.chatInput.focus();
   } catch (error) {
     console.error('New chat error:', error);
   }
