@@ -537,11 +537,12 @@ function initEventListeners() {
     }, 100);
   });
 }
-
 // ========================================
 // INITIALIZATION
 // ========================================
 async function init() {
+  console.log('🚀 Women AI başlatılıyor...');
+  
   initTheme();
   initMobileMenu();
   initEventListeners();
@@ -552,41 +553,58 @@ async function init() {
     console.error('Chat history load error:', error);
   }
   
-  // Hiç sohbet yoksa yeni oluştur
-  if (!currentChatId) {
-    await startNewChat();
-  }
+  console.log('✅ Women AI hazır!');
+  
+  // Input'ları her zaman aktif tut
+  setTimeout(() => {
+    if (elements.chatInput) {
+      elements.chatInput.disabled = false;
+      elements.chatInput.readOnly = false;
+      console.log('✅ Input aktif edildi');
+    }
+    if (elements.sendBtn) {
+      elements.sendBtn.disabled = false;
+      console.log('✅ Send button aktif edildi');
+    }
+  }, 500);
 }
 
-// Start app
 document.addEventListener('DOMContentLoaded', init);
+
 // ========================================
-// MOBİL ACİL FİX - ZORLA EVENT BAĞLA
+// MOBİL ACİL FİX - INPUT BLOKLAMA ÇÖZÜ
 // ========================================
 setTimeout(() => {
-  console.log('🔧 Mobil fix başlatılıyor...');
+  console.log('🔧 Input fix başlatılıyor...');
   
-  const sendBtn = document.getElementById('chat-send');
   const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send');
   
-  if (!sendBtn || !chatInput) {
+  if (!chatInput || !sendBtn) {
     console.error('❌ Elementler bulunamadı!');
     return;
   }
   
-  console.log('✅ Elementler bulundu');
+  // Her şeyi aktif et
+  chatInput.disabled = false;
+  chatInput.readOnly = false;
+  sendBtn.disabled = false;
   
-  // Tüm event listener'ları temizle
-  const newBtn = sendBtn.cloneNode(true);
-  sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+  // Focus verebilme
+  chatInput.addEventListener('touchstart', () => {
+    chatInput.focus();
+  });
   
-  console.log('✅ Event listener\'lar temizlendi');
+  chatInput.addEventListener('click', () => {
+    chatInput.focus();
+  });
   
-  // YENİ EVENT LISTENER EKLE - HER TÜRLÜ
-  const handleSend = (e) => {
-    console.log('🚀 Gönder tuşuna tıklandı!');
+  // Send button için güçlü event
+  const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    console.log('🚀 Button tıklandı!');
     
     const text = chatInput.value.trim();
     if (!text) {
@@ -594,45 +612,34 @@ setTimeout(() => {
       return;
     }
     
-    if (newBtn.disabled) {
-      console.log('⚠️ Button disabled');
-      return;
-    }
-    
-    console.log('✅ Mesaj gönderiliyor:', text);
+    console.log('✅ Mesaj:', text);
     sendMessage(text);
   };
   
-  // Click event
-  newBtn.addEventListener('click', handleSend);
+  // Yeni button oluştur (eski event'leri temizle)
+  const newBtn = sendBtn.cloneNode(true);
+  sendBtn.parentNode.replaceChild(newBtn, sendBtn);
   
-  // Touch events
-  newBtn.addEventListener('touchstart', (e) => {
-    console.log('👆 touchstart');
-    e.preventDefault();
-    newBtn.style.opacity = '0.7';
-  });
-  
+  // Tüm event'leri ekle
+  newBtn.addEventListener('click', handleClick);
   newBtn.addEventListener('touchend', (e) => {
-    console.log('👆 touchend');
     e.preventDefault();
-    newBtn.style.opacity = '1';
-    handleSend(e);
+    handleClick(e);
   });
-  
-  // Pointer events (en güvenilir)
-  newBtn.addEventListener('pointerdown', (e) => {
-    console.log('👉 pointerdown');
-    newBtn.style.transform = 'scale(0.95)';
-  });
-  
   newBtn.addEventListener('pointerup', (e) => {
-    console.log('👉 pointerup');
-    newBtn.style.transform = 'scale(1)';
-    handleSend(e);
+    e.preventDefault();
+    handleClick(e);
   });
   
-  console.log('✅ Tüm event listener\'lar eklendi');
-  console.log('✅ Mobil fix tamamlandı - Artık çalışmalı!');
+  console.log('✅ Input fix tamamlandı!');
   
-}, 1500);
+  // Her 2 saniyede bir input'u aktif tut (güvenlik için)
+  setInterval(() => {
+    if (chatInput.disabled || chatInput.readOnly) {
+      console.log('⚠️ Input kapatılmış, tekrar açılıyor...');
+      chatInput.disabled = false;
+      chatInput.readOnly = false;
+    }
+  }, 2000);
+  
+}, 1000);
