@@ -261,7 +261,12 @@ async function sendMessage(content = null) {
     renderMessages();
   } finally {
     elements.sendBtn.disabled = false;
-    elements.chatInput.focus();
+    // Refocus input and ensure it's ready
+    setTimeout(() => {
+      elements.chatInput.focus();
+      elements.chatInput.disabled = false;
+      elements.chatInput.style.pointerEvents = 'auto';
+    }, 50);
   }
 }
 
@@ -430,6 +435,13 @@ function handleKeyDown(e) {
   }
 }
 
+// Keep input focused
+function ensureInputFocused() {
+  if (elements.chatInput && !elements.chatInput.disabled) {
+    elements.chatInput.focus();
+  }
+}
+
 // ========================================
 // MODE SELECTION
 // ========================================
@@ -449,11 +461,30 @@ function initEventListeners() {
   // Chat operations
   elements.newChatBtn.addEventListener('click', startNewChat);
   elements.clearHistoryBtn.addEventListener('click', clearAllChats);
-  elements.sendBtn.addEventListener('click', () => sendMessage());
+  
+  // Send button - ensure it works on touch
+  elements.sendBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sendMessage();
+  });
+  elements.sendBtn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sendMessage();
+  });
   
   // Input handling
   elements.chatInput.addEventListener('input', autoResizeTextarea);
   elements.chatInput.addEventListener('keydown', handleKeyDown);
+  elements.chatInput.addEventListener('blur', () => {
+    // Refocus on blur to keep keyboard open
+    setTimeout(() => {
+      if (document.activeElement !== elements.chatInput) {
+        elements.chatInput.focus();
+      }
+    }, 100);
+  });
   
   // Weather modal
   elements.weatherCard.addEventListener('click', openWeatherModal);
@@ -484,11 +515,22 @@ async function init() {
   initTheme();
   initMobileMenu();
   initEventListeners();
-  await loadChatHistory();
+  
+  try {
+    await loadChatHistory();
+  } catch (error) {
+    console.error('Chat history load error:', error);
+  }
   
   // Hiç sohbet yoksa yeni oluştur
   if (!currentChatId) {
     await startNewChat();
+  }
+  
+  // Ensure input is ready
+  if (elements.chatInput) {
+    elements.chatInput.disabled = false;
+    elements.chatInput.focus();
   }
 }
 
