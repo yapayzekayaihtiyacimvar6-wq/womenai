@@ -324,6 +324,13 @@ function showWelcomeView() {
 function showChatView() {
   elements.welcomeScreen.classList.add('hidden');
   elements.chatMessages.classList.add('active');
+  
+  // Auto-focus input on mobile
+  setTimeout(() => {
+    if (elements.chatInput && window.innerWidth <= 768) {
+      elements.chatInput.focus();
+    }
+  }, 100);
 }
 
 // ========================================
@@ -391,8 +398,17 @@ async function loadWeather() {
 // ========================================
 function autoResizeTextarea() {
   const textarea = elements.chatInput;
+  if (!textarea) return;
+  
+  // Reset height first to get accurate scrollHeight
   textarea.style.height = 'auto';
-  textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+  
+  // Calculate new height with proper padding
+  const scrollHeight = textarea.scrollHeight;
+  const newHeight = Math.min(scrollHeight, 200);
+  
+  textarea.style.height = newHeight + 'px';
+  textarea.style.overflowY = scrollHeight > 200 ? 'auto' : 'hidden';
 }
 
 function handleKeyDown(e) {
