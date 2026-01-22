@@ -560,3 +560,79 @@ async function init() {
 
 // Start app
 document.addEventListener('DOMContentLoaded', init);
+// ========================================
+// MOBİL ACİL FİX - ZORLA EVENT BAĞLA
+// ========================================
+setTimeout(() => {
+  console.log('🔧 Mobil fix başlatılıyor...');
+  
+  const sendBtn = document.getElementById('chat-send');
+  const chatInput = document.getElementById('chat-input');
+  
+  if (!sendBtn || !chatInput) {
+    console.error('❌ Elementler bulunamadı!');
+    return;
+  }
+  
+  console.log('✅ Elementler bulundu');
+  
+  // Tüm event listener'ları temizle
+  const newBtn = sendBtn.cloneNode(true);
+  sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+  
+  console.log('✅ Event listener\'lar temizlendi');
+  
+  // YENİ EVENT LISTENER EKLE - HER TÜRLÜ
+  const handleSend = (e) => {
+    console.log('🚀 Gönder tuşuna tıklandı!');
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const text = chatInput.value.trim();
+    if (!text) {
+      console.log('⚠️ Boş mesaj');
+      return;
+    }
+    
+    if (newBtn.disabled) {
+      console.log('⚠️ Button disabled');
+      return;
+    }
+    
+    console.log('✅ Mesaj gönderiliyor:', text);
+    sendMessage(text);
+  };
+  
+  // Click event
+  newBtn.addEventListener('click', handleSend);
+  
+  // Touch events
+  newBtn.addEventListener('touchstart', (e) => {
+    console.log('👆 touchstart');
+    e.preventDefault();
+    newBtn.style.opacity = '0.7';
+  });
+  
+  newBtn.addEventListener('touchend', (e) => {
+    console.log('👆 touchend');
+    e.preventDefault();
+    newBtn.style.opacity = '1';
+    handleSend(e);
+  });
+  
+  // Pointer events (en güvenilir)
+  newBtn.addEventListener('pointerdown', (e) => {
+    console.log('👉 pointerdown');
+    newBtn.style.transform = 'scale(0.95)';
+  });
+  
+  newBtn.addEventListener('pointerup', (e) => {
+    console.log('👉 pointerup');
+    newBtn.style.transform = 'scale(1)';
+    handleSend(e);
+  });
+  
+  console.log('✅ Tüm event listener\'lar eklendi');
+  console.log('✅ Mobil fix tamamlandı - Artık çalışmalı!');
+  
+}, 1500);
