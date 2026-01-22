@@ -198,6 +198,9 @@ async function sendMessage(content = null) {
   const text = content || elements.chatInput.value.trim();
   if (!text) return;
   
+  // Disabled durumunda işlem yapma
+  if (elements.sendBtn.disabled) return;
+  
   // chatId yoksa önce yeni sohbet oluştur
   if (!currentChatId) {
     try {
@@ -225,6 +228,7 @@ async function sendMessage(content = null) {
   
   // Disable send button
   elements.sendBtn.disabled = true;
+  elements.sendBtn.style.opacity = '0.5';
   
   try {
     const res = await fetch(API_URL, {
@@ -260,13 +264,15 @@ async function sendMessage(content = null) {
     });
     renderMessages();
   } finally {
+    // Re-enable send button
     elements.sendBtn.disabled = false;
-    // Refocus input and ensure it's ready
-    setTimeout(() => {
+    elements.sendBtn.style.opacity = '1';
+    elements.sendBtn.style.transform = ''; // Reset transform
+    
+    // Focus input (sadece desktop'ta)
+    if (window.innerWidth > 768) {
       elements.chatInput.focus();
-      elements.chatInput.disabled = false;
-      elements.chatInput.style.pointerEvents = 'auto';
-    }, 50);
+    }
   }
 }
 
@@ -328,25 +334,9 @@ function showChatView() {
   elements.welcomeScreen.classList.add('hidden');
   elements.chatMessages.classList.add('active');
   
-  // Ensure input is enabled and visible
-  if (elements.chatInput) {
-    elements.chatInput.disabled = false;
-    elements.chatInput.style.pointerEvents = 'auto';
-    elements.chatInput.style.opacity = '1';
-    elements.chatInput.style.visibility = 'visible';
-  }
-  if (elements.sendBtn) {
-    elements.sendBtn.disabled = false;
-    elements.sendBtn.style.pointerEvents = 'auto';
-  }
-  
-  // Immediate focus for mobile keyboard
+  // Focus input
   if (elements.chatInput) {
     elements.chatInput.focus();
-    // Scroll to bottom
-    if (elements.chatMessages) {
-      elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-    }
   }
 }
 
@@ -411,7 +401,7 @@ async function loadWeather() {
 }
 
 // ========================================
-// INPUT HANDLING
+// INPUT HANDLING - MOBİL İYİLEŞTİRMELERİ
 // ========================================
 function autoResizeTextarea() {
   const textarea = elements.chatInput;
@@ -420,25 +410,47 @@ function autoResizeTextarea() {
   // Reset height first to get accurate scrollHeight
   textarea.style.height = 'auto';
   
-  // Calculate new height with proper padding
+  // Calculate new height with proper padding (mobil için azaltılmış)
   const scrollHeight = textarea.scrollHeight;
-  const newHeight = Math.min(scrollHeight, 200);
+  const newHeight = Math.min(scrollHeight, 150);
   
   textarea.style.height = newHeight + 'px';
-  textarea.style.overflowY = scrollHeight > 200 ? 'auto' : 'hidden';
+  textarea.style.overflowY = scrollHeight > 150 ? 'auto' : 'hidden';
 }
 
 function handleKeyDown(e) {
+  // Enter ile gönderme (Shift+Enter ile yeni satır)
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 }
 
-// Keep input focused
-function ensureInputFocused() {
-  if (elements.chatInput && !elements.chatInput.disabled) {
-    elements.chatInput.focus();
+// Mobil için geliştirilmiş gönder butonu işleyicisi
+function handleSendButton(e) {
+  e.preventDefault(); // Varsayılan davranışı engelle
+  e.stopPropagation(); // Event bubbling'i durdur
+  
+  // Disabled kontrolü
+  if (elements.sendBtn.disabled) return;
+  
+  // Mesaj gönder
+  sendMessage();
+}
+
+// ========================================
+// MOBİL KLAVYE UYUMLULUK
+// ========================================
+function adjustForKeyboard() {
+  // Mobil klavye açıldığında viewport yüksekliği değişir
+  const viewportHeight = window.innerHeight;
+  const isKeyboardOpen = viewportHeight < window.screen.height * 0.75;
+  
+  if (isKeyboardOpen && elements.chatMessages) {
+    // Klavye açıkken mesajları scroll et
+    setTimeout(() => {
+      elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+    }, 100);
   }
 }
 
@@ -452,45 +464,54 @@ function selectMode(btn) {
 }
 
 // ========================================
-// EVENT LISTENERS
+// EVENT LISTENERS - MOBİL GÜNCELLEMELER
 // ========================================
 function initEventListeners() {
   // Theme toggle
-  elements.themeToggle.addEventListener('click', toggleTheme);
+  elements.themeToggle?.addEventListener('click', toggleTheme);
   
   // Chat operations
-  elements.newChatBtn.addEventListener('click', startNewChat);
-  elements.clearHistoryBtn.addEventListener('click', clearAllChats);
+  elements.newChatBtn?.addEventListener('click', startNewChat);
+  elements.clearHistoryBtn?.addEventListener('click', clearAllChats);
   
-  // Send button - ensure it works on touch
-  elements.sendBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    sendMessage();
-  });
-  elements.sendBtn.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    sendMessage();
-  });
+  // SEND BUTTON - Mobil uyumlu event handlers
+  if (elements.sendBtn) {
+    // Mouse click (desktop)
+    elements.sendBtn.addEventListener('click', handleSendButton);
+    
+    // Touch events (mobile)
+    elements.sendBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Çift tıklama engellemesi
+      elements.sendBtn.style.transform = 'scale(0.95)'; // Görsel feedback
+    });
+    
+    elements.sendBtn.addEventListener('touchend', handleSendButton);
+    
+    elements.sendBtn.addEventListener('touchcancel', () => {
+      elements.sendBtn.style.transform = ''; // Reset
+    });
+  }
   
   // Input handling
-  elements.chatInput.addEventListener('input', autoResizeTextarea);
-  elements.chatInput.addEventListener('keydown', handleKeyDown);
-  elements.chatInput.addEventListener('blur', () => {
-    // Refocus on blur to keep keyboard open
-    setTimeout(() => {
-      if (document.activeElement !== elements.chatInput) {
-        elements.chatInput.focus();
-      }
-    }, 100);
-  });
+  if (elements.chatInput) {
+    elements.chatInput.addEventListener('input', autoResizeTextarea);
+    elements.chatInput.addEventListener('keydown', handleKeyDown);
+    
+    // Mobil klavye açıldığında scroll problemi çözümü
+    elements.chatInput.addEventListener('focus', () => {
+      setTimeout(() => {
+        if (elements.chatMessages.scrollHeight > 0) {
+          elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+      }, 300); // Klavye açılma animasyonu için gecikme
+    });
+  }
   
   // Weather modal
-  elements.weatherCard.addEventListener('click', openWeatherModal);
-  elements.weatherModalClose.addEventListener('click', closeWeatherModal);
-  elements.weatherRefresh.addEventListener('click', loadWeather);
-  elements.weatherModalOverlay.addEventListener('click', (e) => {
+  elements.weatherCard?.addEventListener('click', openWeatherModal);
+  elements.weatherModalClose?.addEventListener('click', closeWeatherModal);
+  elements.weatherRefresh?.addEventListener('click', loadWeather);
+  elements.weatherModalOverlay?.addEventListener('click', (e) => {
     if (e.target === elements.weatherModalOverlay) closeWeatherModal();
   });
   
@@ -505,6 +526,15 @@ function initEventListeners() {
       const prompt = btn.dataset.prompt;
       if (prompt) sendMessage(prompt);
     });
+  });
+  
+  // Viewport resize handler (mobil klavye için)
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      adjustForKeyboard();
+    }, 100);
   });
 }
 
@@ -525,12 +555,6 @@ async function init() {
   // Hiç sohbet yoksa yeni oluştur
   if (!currentChatId) {
     await startNewChat();
-  }
-  
-  // Ensure input is ready
-  if (elements.chatInput) {
-    elements.chatInput.disabled = false;
-    elements.chatInput.focus();
   }
 }
 
