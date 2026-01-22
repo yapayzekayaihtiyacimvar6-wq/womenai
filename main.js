@@ -549,6 +549,8 @@ async function init() {
   
   try {
     await loadChatHistory();
+    // Direkt yeni sohbet başlat
+    await startNewChat();
   } catch (error) {
     console.error('Chat history load error:', error);
   }
