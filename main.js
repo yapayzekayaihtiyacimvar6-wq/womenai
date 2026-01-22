@@ -174,7 +174,6 @@ async function startNewChat() {
   if (currentChatId && messages.length === 0) {
     console.log('Mevcut sohbet zaten boş, direkt chat view göster');
     showChatView();
-    elements.chatInput.focus();
     return;
   }
   
@@ -190,7 +189,6 @@ async function startNewChat() {
     renderMessages();
     loadChatHistory();
     showChatView();
-    elements.chatInput.focus();
   } catch (error) {
     console.error('New chat error:', error);
   }
@@ -329,22 +327,22 @@ function showChatView() {
   if (elements.chatInput) {
     elements.chatInput.disabled = false;
     elements.chatInput.style.pointerEvents = 'auto';
+    elements.chatInput.style.opacity = '1';
+    elements.chatInput.style.visibility = 'visible';
   }
   if (elements.sendBtn) {
     elements.sendBtn.disabled = false;
     elements.sendBtn.style.pointerEvents = 'auto';
   }
   
-  // Auto-focus input
-  setTimeout(() => {
-    if (elements.chatInput) {
-      elements.chatInput.focus();
-      // Scroll to bottom
-      if (elements.chatMessages) {
-        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
-      }
+  // Immediate focus for mobile keyboard
+  if (elements.chatInput) {
+    elements.chatInput.focus();
+    // Scroll to bottom
+    if (elements.chatMessages) {
+      elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
     }
-  }, 100);
+  }
 }
 
 // ========================================
