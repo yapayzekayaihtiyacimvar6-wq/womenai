@@ -325,10 +325,24 @@ function showChatView() {
   elements.welcomeScreen.classList.add('hidden');
   elements.chatMessages.classList.add('active');
   
-  // Auto-focus input on mobile
+  // Ensure input is enabled and visible
+  if (elements.chatInput) {
+    elements.chatInput.disabled = false;
+    elements.chatInput.style.pointerEvents = 'auto';
+  }
+  if (elements.sendBtn) {
+    elements.sendBtn.disabled = false;
+    elements.sendBtn.style.pointerEvents = 'auto';
+  }
+  
+  // Auto-focus input
   setTimeout(() => {
-    if (elements.chatInput && window.innerWidth <= 768) {
+    if (elements.chatInput) {
       elements.chatInput.focus();
+      // Scroll to bottom
+      if (elements.chatMessages) {
+        elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+      }
     }
   }, 100);
 }
