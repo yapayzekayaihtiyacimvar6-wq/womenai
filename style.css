@@ -1297,6 +1297,42 @@ body {
     min-width: 32px;
     font-size: 14px;
   }
+  
+  /* Fix input for small mobile screens */
+  .input-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    display: block !important;
+  }
+  
+  .chat-messages {
+    padding-bottom: 80px;
+  }
+  
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: var(--radius-lg);
+    gap: 8px;
+  }
+  
+  #chat-input {
+    font-size: 16px;
+    min-height: 44px;
+    padding: 8px 0;
+  }
+  
+  .send-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* ========================================
