@@ -1087,6 +1087,14 @@ body {
    RESPONSIVE - MOBILE (max-width: 768px)
    ======================================== */
 @media (max-width: 768px) {
+  /* Pull-to-refresh için body scroll'u serbest bırak */
+  html, body {
+    height: 100%;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* Show mobile menu toggle */
   .mobile-menu-toggle {
     display: flex;
