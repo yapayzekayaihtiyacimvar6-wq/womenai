@@ -1219,33 +1219,40 @@ body {
   }
   
   /* Input mobile - FIXED POSITIONING */
-  .input-container {
-    padding: 12px;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--bg-primary);
-    border-top: 1px solid var(--border-light);
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-    z-index: 50;
-  }
-  
-  .input-wrapper {
-    padding: 10px 12px;
-    min-height: 44px;
-  }
-  
-  #chat-input {
-    font-size: 16px;
-    min-height: 40px;
-    max-height: 120px;
-    -webkit-appearance: none;
-    appearance: none;
-    -webkit-user-select: text;
-    user-select: text;
-  }
+.input-container {
+  padding: 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-light);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  z-index: 10001; /* Çok yüksek z-index */
+  transform: translateZ(0); /* GPU acceleration */
+}
+
+.input-wrapper {
+  padding: 10px 12px;
+  min-height: 44px;
+  position: relative;
+  z-index: 10002;
+}
+
+#chat-input {
+  font-size: 16px; /* 16px altı iOS zoom yapar, Android için de iyi */
+  min-height: 40px;
+  max-height: 120px;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-user-select: text;
+  user-select: text; /* Seçilebilir metin */
+  touch-action: manipulation; /* Zoom engelleme */
+  opacity: 1 !important; /* Görünürlük zorlama */
+  visibility: visible !important;
+  pointer-events: auto !important; /* Tıklanabilirlik zorlama */
+}
   
   /* Send button - MOBILE TOUCH OPTIMIZATION */
   .send-btn {
