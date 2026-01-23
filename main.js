@@ -562,7 +562,20 @@ async function init() {
     if (elements.chatInput) {
       elements.chatInput.disabled = false;
       elements.chatInput.readOnly = false;
-      console.log('✅ Input aktif edildi');
+      
+      // Android Touch Event Fix
+      elements.chatInput.addEventListener('touchstart', function(e) {
+        // Event bubbling'i durdurma, sadece focus'a izin ver
+        e.stopPropagation();
+        this.focus();
+      }, { passive: false });
+
+      // Click event'i de garantiye al
+      elements.chatInput.addEventListener('click', function(e) {
+        this.focus();
+      });
+
+      console.log('✅ Input aktif edildi (Android fix eklendi)');
     }
     if (elements.sendBtn) {
       elements.sendBtn.disabled = false;
