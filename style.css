@@ -99,8 +99,11 @@ body {
 /* App Container */
 .app-container {
   display: flex;
-  height: 100vh;
-  height: 100dvh; /* Mobile viewport fix */
+  position: absolute; /* Fixed yerine absolute deneyelim */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* vh yerine % */
   overflow: hidden;
 }
 
@@ -143,13 +146,14 @@ body {
   backdrop-filter: blur(4px);
   z-index: 99;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none; /* Tıklamaları engellememesi için */
+  visibility: hidden; /* Kesin çözüm: Görünmez yap */
+  transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .sidebar-overlay.active {
   opacity: 1;
-  pointer-events: auto; /* Aktifken tıklanabilsin */
+  visibility: visible; /* Aktifken görünür yap */
+  pointer-events: auto;
 }
 
 /* ========================================
