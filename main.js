@@ -37,7 +37,24 @@ function getUserId() {
 // ========================================
 // GOOGLE AUTH MANAGEMENT
 // ========================================
+let isGoogleSignInProgress = false; // Çoklu tıklama koruması
+
 async function handleGoogleSignIn(response) {
+  if (isGoogleSignInProgress) {
+    console.log('⏳ Giriş işlemi zaten devam ediyor...');
+    return;
+  }
+  
+  isGoogleSignInProgress = true;
+  
+  // Butonları devre dışı bırak
+  const loginBtns = document.querySelectorAll('.google-login-btn-large, .google-login-btn');
+  loginBtns.forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.pointerEvents = 'none';
+  });
+  
   try {
     const res = await fetch('/api/auth/google', {
       method: 'POST',
@@ -69,6 +86,14 @@ async function handleGoogleSignIn(response) {
   } catch (err) {
     console.error('Google auth error:', err);
     alert('Giriş sırasında bir hata oluştu');
+  } finally {
+    isGoogleSignInProgress = false;
+    // Butonları tekrar aktif et
+    loginBtns.forEach(btn => {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    });
   }
 }
 
@@ -105,6 +130,7 @@ function updateLoginState() {
   const sidebar = document.getElementById('sidebar');
   const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
   const mainContent = document.querySelector('.main-content');
+  const inputContainer = document.querySelector('.input-container');
 
   if (currentUser) {
     // Giriş yapılmış - chat alanını göster
@@ -115,6 +141,7 @@ function updateLoginState() {
       mobileMenuToggle.classList.remove('hidden');
     }
     if (mainContent) mainContent.classList.remove('login-active');
+    if (inputContainer) inputContainer.style.display = 'block';
   } else {
     // Giriş yapılmamış - login ekranını göster
     if (loginScreen) loginScreen.style.display = 'flex';
@@ -124,6 +151,7 @@ function updateLoginState() {
       mobileMenuToggle.classList.add('hidden');
     }
     if (mainContent) mainContent.classList.add('login-active');
+    if (inputContainer) inputContainer.style.display = 'none';
   }
 }
 
@@ -184,10 +212,21 @@ function initGoogleAuth() {
   // Google Sign-In butonu event listener (sidebar'daki)
   const googleLoginBtn = document.getElementById('google-login-btn');
   if (googleLoginBtn) {
-    googleLoginBtn.addEventListener('click', () => {
+    googleLoginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (isGoogleSignInProgress) return;
+      
       // Google One Tap / Sign-In popup
       if (window.google && window.google.accounts) {
-        google.accounts.id.prompt();
+        google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log('Google prompt gösterilmedi, popup deneyelim');
+            // One Tap gösterilemezse bilgi ver
+            if (notification.getNotDisplayedReason() === 'opt_out_or_no_session') {
+              alert('Google hesabınızla giriş yapmak için tarayıcınızda Google hesabına giriş yapın.');
+            }
+          }
+        });
       } else {
         alert('Google Sign-In yüklenemedi. Sayfayı yenileyin.');
       }
@@ -197,9 +236,19 @@ function initGoogleAuth() {
   // Ana giriş ekranındaki Google butonu
   const googleLoginBtnMain = document.getElementById('google-login-btn-main');
   if (googleLoginBtnMain) {
-    googleLoginBtnMain.addEventListener('click', () => {
+    googleLoginBtnMain.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (isGoogleSignInProgress) return;
+      
       if (window.google && window.google.accounts) {
-        google.accounts.id.prompt();
+        google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.log('Google prompt gösterilmedi:', notification.getNotDisplayedReason());
+            if (notification.getNotDisplayedReason() === 'opt_out_or_no_session') {
+              alert('Google hesabınızla giriş yapmak için tarayıcınızda Google hesabına giriş yapın.');
+            }
+          }
+        });
       } else {
         alert('Google Sign-In yüklenemedi. Sayfayı yenileyin.');
       }
