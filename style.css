@@ -667,7 +667,10 @@ body {
   position: relative;
   overflow: auto;
   min-height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 /* Animated gradient orbs */
@@ -804,6 +807,13 @@ body {
   transform: translateY(-1px);
 }
 
+.google-login-btn-large:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
+}
+
 .google-login-btn-large svg {
   flex-shrink: 0;
 }
@@ -811,9 +821,37 @@ body {
 /* Mobile touch optimization for login button */
 @media (max-width: 768px) {
   .google-login-btn-large {
-    min-height: 52px;
+    min-height: 56px;
     -webkit-tap-highlight-color: rgba(196, 92, 124, 0.2);
     touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: auto !important;
+  }
+  
+  .google-login-btn-large:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .login-container {
+    padding: 24px 16px;
+  }
+  
+  .login-icon {
+    font-size: 40px;
+  }
+  
+  .login-title {
+    font-size: 20px;
+  }
+  
+  .google-login-btn-large {
+    padding: 14px 20px;
+    font-size: 14px;
   }
 }
 
@@ -857,42 +895,63 @@ body {
   }
   
   .login-screen {
-    padding: 24px 20px;
-    padding-top: 60px;
+    padding: 20px;
     min-height: 100vh;
     min-height: 100dvh;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
   }
   
   .login-container {
-    padding: 32px 24px;
+    padding: 28px 20px;
+    margin: auto;
+    max-width: 360px;
+    width: 100%;
   }
   
   .login-icon {
-    font-size: 56px;
-    margin-bottom: 20px;
+    font-size: 48px;
+    margin-bottom: 16px;
   }
   
   .login-title {
-    font-size: 24px;
+    font-size: 22px;
+    margin-bottom: 8px;
   }
   
   .login-subtitle {
-    font-size: 14px;
-    margin-bottom: 24px;
+    font-size: 13px;
+    margin-bottom: 20px;
+    line-height: 1.5;
   }
   
   .google-login-btn-large {
-    padding: 14px 24px;
+    padding: 16px 24px;
     font-size: 15px;
+    min-height: 56px;
+    width: 100%;
+    margin-bottom: 20px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    cursor: pointer;
+    position: relative;
+    z-index: 10000;
   }
   
   .login-features {
-    gap: 12px;
+    gap: 10px;
   }
   
   .login-feature {
-    font-size: 13px;
+    font-size: 12px;
+    padding: 6px 12px;
   }
 }
 
@@ -1513,11 +1572,9 @@ body {
   /* Login screen has no menu toggle, reduce top padding */
   .main-content.login-active {
     padding-top: 0;
-  }
-  
-  .login-screen {
-    padding-top: 40px;
-    padding-bottom: 40px;
+    padding-bottom: 0;
+    height: 100vh;
+    height: 100dvh;
   }
   
   .chat-container {
@@ -1627,7 +1684,7 @@ body {
   background: var(--bg-primary);
   border-top: 1px solid var(--border-light);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  z-index: 10001; /* Çok yüksek z-index */
+  z-index: 50; /* Login screen altında kalacak */
   transform: translateZ(0); /* GPU acceleration */
 }
 
@@ -1635,7 +1692,7 @@ body {
   padding: 10px 12px;
   min-height: 44px;
   position: relative;
-  z-index: 10002;
+  z-index: 51;
 }
 
 #chat-input {
