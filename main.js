@@ -7,16 +7,24 @@
 // Configuration
 const API_URL = '/api/chat';
 const WEATHER_URL = '/api/weather';
+const GOOGLE_CLIENT_ID = ''; // .env'den alınacak, başlangıçta boş
 
 // State
 let currentChatId = null;
 let messages = [];
 let currentMode = 'care';
+let currentUser = null; // Giriş yapmış kullanıcı
 
 // ========================================
-// USER ID MANAGEMENT (Visitor Tracking)
+// USER ID MANAGEMENT (Visitor Tracking + Google Auth)
 // ========================================
 function getUserId() {
+  // Eğer Google ile giriş yapılmışsa
+  if (currentUser && currentUser.id) {
+    return `google_${currentUser.id}`;
+  }
+  
+  // Misafir kullanıcı için visitor ID
   let visitorId = localStorage.getItem('womenai_visitor_id');
   if (!visitorId) {
     // Generate unique visitor ID
@@ -24,6 +32,147 @@ function getUserId() {
     localStorage.setItem('womenai_visitor_id', visitorId);
   }
   return visitorId;
+}
+
+// ========================================
+// GOOGLE AUTH MANAGEMENT
+// ========================================
+async function handleGoogleSignIn(response) {
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential }),
+    });
+
+    const data = await res.json();
+    
+    if (data.success && data.user) {
+      currentUser = data.user;
+      localStorage.setItem('womenai_user', JSON.stringify(data.user));
+      
+      // Eski sohbetleri Google hesabına taşı
+      const oldVisitorId = localStorage.getItem('womenai_visitor_id');
+      if (oldVisitorId) {
+        await migrateChatsToGoogleAccount(oldVisitorId, data.user.id);
+      }
+      
+      updateUserUI();
+      loadChatHistory(); // Sohbetleri yeniden yükle
+      console.log('✅ Google ile giriş başarılı:', data.user.name);
+    } else {
+      console.error('Google giriş hatası:', data.error);
+      alert('Giriş başarısız: ' + (data.error || 'Bilinmeyen hata'));
+    }
+  } catch (err) {
+    console.error('Google auth error:', err);
+    alert('Giriş sırasında bir hata oluştu');
+  }
+}
+
+async function migrateChatsToGoogleAccount(visitorId, googleUserId) {
+  try {
+    const res = await fetch('/api/auth/migrate-chats', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitorId, googleUserId }),
+    });
+    
+    const data = await res.json();
+    if (data.success && data.migratedCount > 0) {
+      console.log(`✅ ${data.migratedCount} sohbet Google hesabına taşındı`);
+    }
+  } catch (err) {
+    console.error('Chat migration error:', err);
+  }
+}
+
+function handleGoogleSignOut() {
+  currentUser = null;
+  localStorage.removeItem('womenai_user');
+  updateUserUI();
+  loadChatHistory(); // Misafir olarak sohbetleri yükle
+  console.log('✅ Çıkış yapıldı');
+}
+
+function updateUserUI() {
+  const userGuest = document.getElementById('user-guest');
+  const userProfile = document.getElementById('user-profile');
+  const userAvatar = document.getElementById('user-avatar');
+  const userName = document.getElementById('user-name');
+  const userEmail = document.getElementById('user-email');
+
+  if (currentUser) {
+    // Giriş yapmış kullanıcı
+    if (userGuest) userGuest.style.display = 'none';
+    if (userProfile) userProfile.style.display = 'flex';
+    if (userAvatar) userAvatar.src = currentUser.picture || 'https://via.placeholder.com/40';
+    if (userName) userName.textContent = currentUser.name || 'Kullanıcı';
+    if (userEmail) userEmail.textContent = currentUser.email || '';
+  } else {
+    // Misafir kullanıcı
+    if (userGuest) userGuest.style.display = 'block';
+    if (userProfile) userProfile.style.display = 'none';
+  }
+}
+
+function initGoogleAuth() {
+  // Local storage'dan kullanıcıyı yükle
+  const savedUser = localStorage.getItem('womenai_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      updateUserUI();
+    } catch (e) {
+      localStorage.removeItem('womenai_user');
+    }
+  }
+
+  // Google Sign-In butonu event listener
+  const googleLoginBtn = document.getElementById('google-login-btn');
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', () => {
+      // Google One Tap / Sign-In popup
+      if (window.google && window.google.accounts) {
+        google.accounts.id.prompt();
+      } else {
+        alert('Google Sign-In yüklenemedi. Sayfayı yenileyin.');
+      }
+    });
+  }
+
+  // Çıkış butonu
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleGoogleSignOut);
+  }
+
+  // Google Identity Services'ı initialize et
+  // Not: GOOGLE_CLIENT_ID server'dan alınmalı
+  fetchGoogleClientId();
+}
+
+async function fetchGoogleClientId() {
+  try {
+    // Server'dan config al
+    const response = await fetch('/api/config');
+    const config = await response.json();
+    const clientId = config.googleClientId;
+    
+    if (clientId && window.google && window.google.accounts) {
+      google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleSignIn,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      console.log('✅ Google Sign-In hazır');
+    } else if (!clientId) {
+      console.warn('⚠️ Google Client ID yapılandırılmamış');
+    }
+  } catch (err) {
+    console.error('Google Client ID alınamadı:', err);
+  }
 }
 
 // DOM Elements
@@ -549,6 +698,7 @@ async function init() {
   initTheme();
   initMobileMenu();
   initEventListeners();
+  initGoogleAuth(); // Google OAuth başlat
   
   try {
     await loadChatHistory();
