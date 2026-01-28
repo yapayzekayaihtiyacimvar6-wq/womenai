@@ -92,9 +92,10 @@ async function migrateChatsToGoogleAccount(visitorId, googleUserId) {
 function handleGoogleSignOut() {
   currentUser = null;
   localStorage.removeItem('womenai_user');
-  updateUserUI();
-  updateLoginState(); // Giriş ekranını göster
   console.log('✅ Çıkış yapıldı');
+  
+  // Sayfayı yenile - Google Sign-In'i resetlemek için
+  window.location.reload();
 }
 
 // Giriş durumuna göre ekranları göster/gizle
@@ -139,7 +140,22 @@ function updateUserUI() {
     if (userProfile) userProfile.style.display = 'flex';
     // Default avatar - data URI SVG
     const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0iI0M0NUM3QyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIxNSIgcj0iOCIgZmlsbD0iI0U4QTBCNSIvPjxwYXRoIGQ9Ik0zNSAzOGMwLTguMjg0LTYuNzE2LTE1LTE1LTE1cy0xNSA2LjcxNi0xNSAxNSIgZmlsbD0iI0U4QTBCNSIvPjwvc3ZnPg==';
-    if (userAvatar) userAvatar.src = currentUser.picture || defaultAvatar;
+    
+    // Avatar URL'sini doğrula - sadece güvenilir kaynaklardan gelen URL'leri kabul et
+    const isValidAvatarUrl = (url) => {
+      if (!url || typeof url !== 'string') return false;
+      // Google ve diğer güvenilir kaynakları kabul et
+      const trustedDomains = ['googleusercontent.com', 'google.com', 'gstatic.com', 'gravatar.com'];
+      try {
+        const urlObj = new URL(url);
+        return trustedDomains.some(domain => urlObj.hostname.endsWith(domain));
+      } catch {
+        return false;
+      }
+    };
+    
+    const avatarUrl = isValidAvatarUrl(currentUser.picture) ? currentUser.picture : defaultAvatar;
+    if (userAvatar) userAvatar.src = avatarUrl;
     if (userName) userName.textContent = currentUser.name || 'Kullanıcı';
     if (userEmail) userEmail.textContent = currentUser.email || '';
   } else {
