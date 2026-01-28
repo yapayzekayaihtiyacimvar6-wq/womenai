@@ -137,7 +137,9 @@ function updateUserUI() {
     // Giriş yapmış kullanıcı
     if (userGuest) userGuest.style.display = 'none';
     if (userProfile) userProfile.style.display = 'flex';
-    if (userAvatar) userAvatar.src = currentUser.picture || 'https://via.placeholder.com/40';
+    // Default avatar - data URI SVG
+    const defaultAvatar = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0iI0M0NUM3QyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIxNSIgcj0iOCIgZmlsbD0iI0U4QTBCNSIvPjxwYXRoIGQ9Ik0zNSAzOGMwLTguMjg0LTYuNzE2LTE1LTE1LTE1cy0xNSA2LjcxNi0xNSAxNSIgZmlsbD0iI0U4QTBCNSIvPjwvc3ZnPg==';
+    if (userAvatar) userAvatar.src = currentUser.picture || defaultAvatar;
     if (userName) userName.textContent = currentUser.name || 'Kullanıcı';
     if (userEmail) userEmail.textContent = currentUser.email || '';
   } else {
